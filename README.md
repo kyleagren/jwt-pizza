@@ -1,6 +1,6 @@
 # 🍕 JWT Pizza
 
-![Coverage badge](https://pizza-factory.cs329.click/api/badge/accountId/jwtpizzacoverage?t=1)
+![Coverage badge](https://pizza-factory.cs329.click/api/badge/kagren11/jwtpizzacoverage)
 
 [![CI Pipeline](https://github.com/kyleagren/jwt-pizza/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleagren/jwt-pizza/actions/workflows/ci.yml)
 
@@ -116,7 +116,11 @@ Updated the tailwind config to use preline.
 const defaultTheme = require('tailwindcss/defaultTheme');
 
 module.exports = {
-  content: ['index.html', './src/**/*.{html,js,jsx}', './node_modules/preline/preline.js'],
+  content: [
+    'index.html',
+    './src/**/*.{html,js,jsx}',
+    './node_modules/preline/preline.js',
+  ],
   theme: {
     extend: {
       fontFamily: {
