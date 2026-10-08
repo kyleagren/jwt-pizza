@@ -159,6 +159,10 @@ async function basicInit(page: Page) {
     await route.fulfill({ json: franchiseRes });
   });
 
+  await page.route('**/api/franchise/4', async (route) => {
+    await route.fulfill({ json: [franchiseeRes] });
+  });
+
   await page.route('*/**/api/order', async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
@@ -180,7 +184,7 @@ async function basicInit(page: Page) {
     await route.fulfill({ json: orderRes });
   });
 
-  await page.route('https://pizza-factory.cs329.click/api/order/verify', async (route) => {
+  await page.route('**/api/order/verify', async (route) => {
     expect(route.request().method()).toBe('POST');
     await route.fulfill({
       json: { message: 'valid', payload: 'order verified' },
@@ -274,7 +278,7 @@ test('purchase with login', async ({ page }) => {
 
   await expect(page.getByText('0.008')).toBeVisible();
   await page.getByRole('button', { name: 'Verify' }).click();
-  await expect(page.getByText('valid')).toBeVisible();
+  await expect(page.getByText('valid', { exact: true })).toBeVisible();
 });
 
 test('admin can create a franchise', async ({ page }) => {
@@ -308,7 +312,9 @@ test('franchisee can create a store', async ({ page }) => {
     .getByRole('link', { name: 'Franchise' })
     .click();
 
-  await expect(page.locator('h2')).toContainText('LotaPizza');
+  await expect(
+    page.getByRole('heading', { name: 'LotaPizza', level: 2 }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Create store' }).click();
   await page.getByPlaceholder('store name').fill('Provo');
   await page.getByRole('button', { name: 'Create' }).click();
