@@ -1,8 +1,9 @@
-import { test, expect } from 'playwright-test-coverage';
+import { test, expect } from './testSetup';
+import { basicInit, editUser, login } from './helpers';
 
 test('updateUser', async ({ page }) => {
   const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
-  await page.goto('/');
+  await basicInit(page);
   await page.getByRole('link', { name: 'Register' }).click();
   await page.getByRole('textbox', { name: 'Full name' }).fill('pizza diner');
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
@@ -42,4 +43,94 @@ test('updateUser', async ({ page }) => {
   await page.getByRole('link', { name: 'pd' }).click();
 
   await expect(page.getByRole('main')).toContainText('pizza dinerx');
+});
+
+test('diner can change password', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+
+  await editUser(page, { password: 'newpass' });
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+
+  // the old password should no longer work
+  await login(page, 'd@jwt.com', 'a');
+  await expect(page.getByText(/401/)).toBeVisible();
+
+  await page.getByRole('textbox', { name: 'Password' }).fill('newpass');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await expect(page.getByRole('link', { name: 'KC' })).toBeVisible();
+});
+
+test('diner can change email', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'd@jwt.com', 'a');
+  await page.getByRole('link', { name: 'KC' }).click();
+
+  await editUser(page, { email: 'kai@jwt.com' });
+  await expect(page.getByRole('main')).toContainText('kai@jwt.com');
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+
+  // the old email should no longer work
+  await login(page, 'd@jwt.com', 'a');
+  await expect(page.getByText(/401/)).toBeVisible();
+
+  await page
+    .getByRole('textbox', { name: 'Email address' })
+    .fill('kai@jwt.com');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await page.getByRole('link', { name: 'KC' }).click();
+  await expect(page.getByRole('main')).toContainText('kai@jwt.com');
+});
+
+test('admin can update their user info', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'a@jwt.com', 'test');
+  await page.getByRole('link', { name: '常' }).click();
+  await expect(page.getByRole('main')).toContainText('admin');
+
+  await editUser(page, {
+    name: 'Boss Admin',
+    email: 'boss@jwt.com',
+    password: 'boss',
+  });
+
+  const main = page.getByRole('main');
+  await expect(main).toContainText('Boss Admin');
+  await expect(main).toContainText('boss@jwt.com');
+  await expect(main).toContainText('admin');
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'boss@jwt.com', 'boss');
+  await page.getByRole('link', { name: 'BA' }).click();
+
+  await expect(main).toContainText('Boss Admin');
+  await expect(main).toContainText('admin');
+});
+
+test('franchisee can update their user info', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'f@jwt.com', 'franchise');
+  await page.getByRole('link', { name: 'FO' }).click();
+  await expect(page.getByRole('main')).toContainText('Franchisee on 2');
+
+  await editUser(page, {
+    name: 'Pizza Owner',
+    email: 'owner@jwt.com',
+    password: 'owner',
+  });
+
+  const main = page.getByRole('main');
+  await expect(main).toContainText('Pizza Owner');
+  await expect(main).toContainText('owner@jwt.com');
+  await expect(main).toContainText('Franchisee on 2');
+
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'owner@jwt.com', 'owner');
+  await page.getByRole('link', { name: 'PO' }).click();
+
+  await expect(main).toContainText('Pizza Owner');
+  await expect(main).toContainText('Franchisee on 2');
 });
