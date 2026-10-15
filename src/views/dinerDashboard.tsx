@@ -28,6 +28,7 @@ export default function DinerDashboard(props: Props) {
   const nameRef = React.useRef<HTMLInputElement>(null);
   const emailRef = React.useRef<HTMLInputElement>(null);
   const passwordRef = React.useRef<HTMLInputElement>(null);
+  const [updateError, setUpdateError] = React.useState('');
 
   async function updateUser() {
     let updatedUser: User = {
@@ -38,12 +39,15 @@ export default function DinerDashboard(props: Props) {
       roles: user.roles,
     };
 
-    await pizzaService.updateUser(updatedUser);
-
-    props.setUser(updatedUser);
-    setTimeout(() => {
-      HSOverlay.close(document.getElementById('hs-jwt-modal')!);
-    }, 100);
+    try {
+      props.setUser(await pizzaService.updateUser(updatedUser));
+      setUpdateError('');
+      setTimeout(() => {
+        HSOverlay.close(document.getElementById('edit-user-modal')!);
+      }, 100);
+    } catch (e: any) {
+      setUpdateError(e.message || 'Unable to update user');
+    }
   }
 
   function formatRole(role: { role: Role; objectId?: string }) {
@@ -66,9 +70,10 @@ export default function DinerDashboard(props: Props) {
           <Button
             title="Edit"
             className="w-16 p-0"
-            onPress={() =>
-              HSOverlay.open(document.getElementById('hs-jwt-modal')!)
-            }
+            onPress={() => {
+              setUpdateError('');
+              HSOverlay.open(document.getElementById('edit-user-modal')!);
+            }}
           />
         </div>
 
@@ -164,7 +169,7 @@ export default function DinerDashboard(props: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
-        id="hs-jwt-modal"
+        id="edit-user-modal"
         className="hs-overlay hidden size-full fixed top-10 start-0 z-[80] overflow-x-hidden overflow-y-auto pointer-events-none"
       >
         <div className="hs-overlay-open:mt-7 hs-overlay-open:opacity-100 hs-overlay-open:duration-500 mt-0 opacity-0 ease-out transition-all sm:max-w-lg sm:w-full m-3 sm:mx-auto min-h-[calc(100%-3.5rem)]">
@@ -174,7 +179,7 @@ export default function DinerDashboard(props: Props) {
               <button
                 type="button"
                 className="flex justify-center items-center size-7 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none"
-                data-hs-overlay="#hs-jwt-modal"
+                data-hs-overlay="#edit-user-modal"
               >
                 <CloseIcon className="" />
               </button>
@@ -204,6 +209,11 @@ export default function DinerDashboard(props: Props) {
                   ref={passwordRef}
                 />
               </div>
+              {updateError && (
+                <div role="alert" className="text-sm text-red-600">
+                  {updateError}
+                </div>
+              )}
             </div>
             <div className="flex justify-end items-center gap-x-2 py-3 px-4 border-t  bg-slate-200 rounded-b-xl">
               <button

@@ -87,7 +87,7 @@ export default function AdminDashboard(props: Props) {
                         return (
                           <tbody key={findex} className="divide-y divide-gray-200">
                             <tr className="border-neutral-500 border-t-2">
-                              <td className="text-start px-2 whitespace-nowrap text-l font-mono text-orange-600">{franchise.name}</td>
+                              <td className="text-start px-2 whitespace-nowrap text-lg font-mono text-orange-600">{franchise.name}</td>
                               <td className="text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800" colSpan={3}>
                                 {franchise.admins?.map((o) => o.name).join(', ')}
                               </td>
@@ -166,7 +166,7 @@ export default function AdminDashboard(props: Props) {
                       <tbody className="divide-y divide-gray-200">
                         {userList.users.map((user) => (
                           <tr key={user.id} className="border-neutral-500 border-t-2">
-                            <td className="text-start px-2 whitespace-nowrap text-l font-mono text-orange-600">{user.name}</td>
+                            <td className="text-start px-2 whitespace-nowrap text-lg font-mono text-orange-600">{user.name}</td>
                             <td className="text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800">{user.email}</td>
                             <td className="text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800">{user.roles?.map((r) => r.role).join(', ')}</td>
                             <td className="px-6 py-1 whitespace-nowrap text-end text-sm font-medium">
