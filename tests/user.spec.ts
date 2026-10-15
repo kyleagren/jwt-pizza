@@ -175,7 +175,16 @@ test('admin can delete a user', async ({ page }) => {
 
   const kaiRow = page.getByRole('row', { name: /Kai Chen/ });
   await expect(kaiRow).toBeVisible();
+
+  // cancelling the confirmation keeps the user
   await kaiRow.getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByRole('main')).toContainText('Are you sure you want to delete Kai Chen');
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(kaiRow).toBeVisible();
+
+  await kaiRow.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
   await expect(kaiRow).toHaveCount(0);
 
   // the deleted user can no longer log in
