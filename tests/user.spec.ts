@@ -134,3 +134,52 @@ test('franchisee can update their user info', async ({ page }) => {
   await expect(main).toContainText('Pizza Owner');
   await expect(main).toContainText('Franchisee on 2');
 });
+
+test('admin can list users', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'a@jwt.com', 'test');
+  await page.getByRole('link', { name: 'Admin' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
+  const kaiRow = page.getByRole('row', { name: /Kai Chen/ });
+  await expect(kaiRow).toContainText('d@jwt.com');
+  await expect(kaiRow).toContainText('diner');
+  await expect(page.getByRole('row', { name: /Pizza Fan/ })).toBeVisible();
+
+  // only 3 users per page, so the franchisee is on the next page
+  await expect(page.getByRole('row', { name: /Franchise Owner/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Next users page' }).click();
+  await expect(page.getByRole('row', { name: /Franchise Owner/ })).toContainText('franchisee');
+  await expect(kaiRow).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Previous users page' }).click();
+  await expect(kaiRow).toBeVisible();
+});
+
+test('admin can filter users', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'a@jwt.com', 'test');
+  await page.getByRole('link', { name: 'Admin' }).click();
+
+  await page.getByPlaceholder('Filter users').fill('fan');
+  await page.getByRole('button', { name: 'Filter users' }).click();
+
+  await expect(page.getByRole('row', { name: /Pizza Fan/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Kai Chen/ })).toHaveCount(0);
+});
+
+test('admin can delete a user', async ({ page }) => {
+  await basicInit(page);
+  await login(page, 'a@jwt.com', 'test');
+  await page.getByRole('link', { name: 'Admin' }).click();
+
+  const kaiRow = page.getByRole('row', { name: /Kai Chen/ });
+  await expect(kaiRow).toBeVisible();
+  await kaiRow.getByRole('button', { name: 'Delete' }).click();
+  await expect(kaiRow).toHaveCount(0);
+
+  // the deleted user can no longer log in
+  await page.getByRole('link', { name: 'Logout' }).click();
+  await login(page, 'd@jwt.com', 'a');
+  await expect(page.getByText(/401/)).toBeVisible();
+});

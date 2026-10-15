@@ -12,6 +12,13 @@ export async function basicInit(page: Page) {
       password: 'test',
       roles: [{ role: Role.Admin }],
     },
+    'p@jwt.com': {
+      id: '2',
+      name: 'Pizza Fan',
+      email: 'p@jwt.com',
+      password: 'fan',
+      roles: [{ role: Role.Diner }],
+    },
     'd@jwt.com': {
       id: '3',
       name: 'Kai Chen',
@@ -71,15 +78,43 @@ export async function basicInit(page: Page) {
     await route.fulfill({ json: loggedInUser });
   });
 
+  // GET /api/user?page=1&limit=3&name=*fan*
+  await page.route('*/**/api/user?*', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    const params = new URL(route.request().url()).searchParams;
+    const pageNum = Number(params.get('page'));
+    const limit = Number(params.get('limit'));
+    const name = params.get('name')!.replace(/\*/g, '').toLowerCase();
+
+    const matches = Object.values(validUsers).filter((u) =>
+      u.name!.toLowerCase().includes(name),
+    );
+    const start = (pageNum - 1) * limit;
+    await route.fulfill({
+      json: {
+        users: matches.slice(start, start + limit),
+        more: matches.length > start + limit,
+      },
+    });
+  });
+
   await page.route(/\/api\/user\/\d+$/, async (route) => {
-    expect(route.request().method()).toBe('PUT');
+    const method = route.request().method();
+    expect(['PUT', 'DELETE']).toContain(method);
     const id = new URL(route.request().url()).pathname.split('/').pop();
-    const updateReq = route.request().postDataJSON();
     const user = Object.values(validUsers).find((u) => u.id === id);
     if (!user) {
       await route.fulfill({ status: 404, json: { error: 'unknown user' } });
       return;
     }
+
+    if (method === 'DELETE') {
+      delete validUsers[user.email!];
+      await route.fulfill({ json: {} });
+      return;
+    }
+
+    const updateReq = route.request().postDataJSON();
 
     // re-key by email so later logins must use the updated email
     delete validUsers[user.email!];
